@@ -15,7 +15,6 @@ class DrapeApp extends StatelessWidget {
     return MaterialApp(
       title: 'Drape',
       theme: ThemeData(
-        // Using a dark theme often looks more "modern" for Gen Z/Gaming apps
         brightness: Brightness.dark,
         primarySwatch: Colors.blue,
         useMaterial3: true,
@@ -29,54 +28,50 @@ class MainWrapper extends StatefulWidget {
   const MainWrapper({super.key});
 
   @override
-  State<MainWrapper> createState() => _MainWrapperState();
+  State<MainWrapper> createState() => MainWrapperState();
 }
 
-class _MainWrapperState extends State<MainWrapper> {
+class MainWrapperState extends State<MainWrapper> {
   // This variable keeps track of which tab is currently selected
-  // 0 = Wardrobe, 1 = Studio, 2 = Profile
   int _currentIndex = 0;
 
-  // These are the 3 screens we will switch between.
-  // For now, they are just simple placeholders with text.
   final List<Widget> _screens = [
     const WardrobeScreen(),
-    const StudioScreen(), // <--- NEW SCREEN
+    const StudioScreen(),
     const AvatarScreen(),
   ];
+
+  // --- THIS WAS MISSING ---
+  // This function allows other screens (like AvatarScreen) to change the tab.
+  void switchToTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+  // ------------------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // The AppBar is the title bar at the top
-      // appBar: AppBar(
-      //   title: const Text('Drape Prototype'),
-      //   centerTitle: true,
-      // ),
-
-      // The 'body' changes based on which tab is selected
       body: _screens[_currentIndex],
-
-      // This is the navigation bar at the bottom
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (int index) {
-          // This code runs when you click a tab
           setState(() {
             _currentIndex = index;
           });
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.checkroom), // Icon for clothes
+            icon: Icon(Icons.checkroom),
             label: 'Wardrobe',
           ),
           NavigationDestination(
-            icon: Icon(Icons.view_in_ar), // Icon for 3D/AR
+            icon: Icon(Icons.view_in_ar),
             label: 'Studio',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person), // Icon for user
+            icon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],

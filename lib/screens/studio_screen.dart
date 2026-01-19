@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+import '../user_data.dart';
+import '../main.dart'; // <--- Vital import
 
 class StudioScreen extends StatefulWidget {
   const StudioScreen({super.key});
@@ -9,44 +11,36 @@ class StudioScreen extends StatefulWidget {
 }
 
 class _StudioScreenState extends State<StudioScreen> {
-  // Research Feature: The Toggle
   bool _isEnhancedDrape = false;
-
-  // Selected Garment Index
   int _selectedGarmentIndex = 0;
-
-  // For the Prototype, we use a fixed Avatar URL.
-  // In the full app, this would come from the AvatarScreen data.
-  final String _avatarUrl = "https://modelviewer.dev/shared-assets/models/Astronaut.glb";
-
-  // Dummy Garments
-  final List<String> _garments = [
-    "T-Shirt",
-    "Summer Dress",
-    "Hoodie",
-    "Jacket"
-  ];
+  final List<String> _garments = ["T-Shirt", "Summer Dress", "Hoodie", "Jacket"];
 
   @override
   Widget build(BuildContext context) {
+    // 1. THE GATEKEEPER CHECK
+    // If the user hasn't created an avatar yet, show the "Locked" screen.
+    if (!UserData.hasCreatedAvatar) {
+      return _buildLockedState();
+    }
+
+    // 2. THE 3D STUDIO (Only shown if unlocked)
     return Scaffold(
       body: Stack(
         children: [
-          // 1. THE 3D AVATAR VIEWER
-          // We wrap it in a container to give it a background
+          // The 3D Viewer
           Container(
-            color: Colors.grey[900], // Dark background for gaming feel
+            color: Colors.grey[900],
             child: ModelViewer(
-              src: _avatarUrl,
-              alt: "A 3D model of your avatar",
-              ar: false, // Turn off AR for now
+              src: UserData.avatarUrl, // Uses the URL from the Profile/Tailor
+              alt: "Your Digital Twin",
+              ar: false,
               autoRotate: false,
-              cameraControls: true, // Allow user to rotate/zoom
+              cameraControls: true,
               backgroundColor: Colors.transparent,
             ),
           ),
 
-          // 2. THE RESEARCH TOGGLE (Top Center)
+          // Research Toggle (Drape Mode)
           SafeArea(
             child: Align(
               alignment: Alignment.topCenter,
@@ -60,50 +54,24 @@ class _StudioScreenState extends State<StudioScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      "Standard",
-                      style: TextStyle(
-                        color: !_isEnhancedDrape ? Colors.white : Colors.grey,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text("Standard", style: TextStyle(color: !_isEnhancedDrape ? Colors.white : Colors.grey)),
                     Switch(
                       value: _isEnhancedDrape,
                       activeColor: Colors.blueAccent,
-                      onChanged: (value) {
-                        setState(() {
-                          _isEnhancedDrape = value;
-                        });
-
-                        // Research validation:
-                        if (_isEnhancedDrape) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Drape Model Activated: Generating Realistic Folds..."),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        }
-                      },
+                      onChanged: (val) => setState(() => _isEnhancedDrape = val),
                     ),
-                    Text(
-                      "Enhanced Drape",
-                      style: TextStyle(
-                        color: _isEnhancedDrape ? Colors.blueAccent : Colors.grey,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text("Enhanced Drape", style: TextStyle(color: _isEnhancedDrape ? Colors.blueAccent : Colors.grey)),
                   ],
                 ),
               ),
             ),
           ),
 
-          // 3. THE GARMENT SELECTOR (Bottom)
+          // Garment Selector
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              height: 140,
+              height: 120,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
@@ -113,16 +81,12 @@ class _StudioScreenState extends State<StudioScreen> {
               ),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.all(20),
                 itemCount: _garments.length,
                 itemBuilder: (context, index) {
                   bool isSelected = _selectedGarmentIndex == index;
                   return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedGarmentIndex = index;
-                      });
-                    },
+                    onTap: () => setState(() => _selectedGarmentIndex = index),
                     child: Container(
                       margin: const EdgeInsets.only(right: 15),
                       width: 80,
@@ -134,11 +98,7 @@ class _StudioScreenState extends State<StudioScreen> {
                       child: Center(
                         child: Text(
                           _garments[index],
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
+                          style: TextStyle(color: Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
                         ),
                       ),
                     ),
@@ -148,6 +108,49 @@ class _StudioScreenState extends State<StudioScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // --- THE LOCKED STATE WIDGET ---
+  Widget _buildLockedState() {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(30.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+              const SizedBox(height: 20),
+              const Text(
+                "Fitting Room Locked",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "To see how clothes fit on YOUR body, you need to create your digital twin first.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+              const SizedBox(height: 40),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                ),
+                icon: const Icon(Icons.arrow_forward),
+                label: const Text("Go to Profile to Create Avatar", style: TextStyle(fontSize: 16, color: Colors.white)),
+                onPressed: () {
+                  // TELEPORT TO PROFILE TAB (Index 2)
+                  final state = context.findAncestorStateOfType<MainWrapperState>();
+                  state?.switchToTab(2);
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
