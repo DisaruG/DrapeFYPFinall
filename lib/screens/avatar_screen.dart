@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../user_data.dart';
 import '../main.dart';
+import 'camera_mock_screen.dart'; // Import the Scanner
 
 class AvatarScreen extends StatefulWidget {
   const AvatarScreen({super.key});
@@ -18,7 +19,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
   double _selectedAge = 22;
   String? _selectedMethod;
 
-  // Measurements
+  // Measurements (Defaults)
   double _heightVal = 170;
   double _weightVal = 65;
   double _chestVal = 90;
@@ -33,6 +34,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // LOGIC: If avatar exists, show Profile Card. If not, show Wizard.
     if (UserData.hasCreatedAvatar) {
       return _buildProfileDashboard();
     } else {
@@ -55,6 +57,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
               setState(() {
                 UserData.hasCreatedAvatar = false;
                 _currentStep = 0;
+                // Reset to defaults
+                _heightVal = 170;
+                _weightVal = 65;
               });
             },
           )
@@ -84,6 +89,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
               ),
               const SizedBox(height: 40),
 
+              // Stats Card
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -105,6 +111,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
               ),
               const SizedBox(height: 30),
 
+              // Edit Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -220,42 +227,102 @@ class _AvatarScreenState extends State<AvatarScreen> {
     );
   }
 
-  // Step 2: Method (RESTORED TEXT)
+  // Step 2: Method
   Widget _buildMethodStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text("Choose a method", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        // RESTORED SUBTITLE BELOW
         const Text("How would you like to build your body model?", style: TextStyle(fontSize: 16, color: Colors.grey)),
         const SizedBox(height: 40),
-
-        _buildMethodOption(id: 'photo', title: "Take a Photo", subtitle: "Quickest. Requires good lighting.", icon: Icons.camera_alt),
+        _buildMethodOption(id: 'photo', title: "Take a Photo (AI)", subtitle: "Quickest. Requires good lighting.", icon: Icons.camera_alt),
         const SizedBox(height: 15),
         _buildMethodOption(id: 'measurements', title: "Enter Measurements", subtitle: "Detailed control.", icon: Icons.straighten),
       ],
     );
   }
 
-  // Step 3: Input (RESTORED TEXT)
+  // Step 3: Input (Handles both AI Camera and Sliders)
   Widget _buildInputStep() {
-    if (_selectedMethod == 'photo') return const Center(child: Icon(Icons.camera_alt, size: 60, color: Colors.grey));
+    // --- OPTION A: CAMERA SCANNER START ---
+    if (_selectedMethod == 'photo') {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(30),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.blueAccent, width: 2),
+              ),
+              child: const Icon(Icons.camera_alt, size: 50, color: Colors.white),
+            ),
+            const SizedBox(height: 30),
+            const Text("AI Body Scanner", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            const Text(
+              "Stand 2 meters away from the camera.\nWear tight-fitting clothes for best results.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+              ),
+              onPressed: () {
+                // LAUNCH THE MOCK CAMERA
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CameraMockScreen(
+                      onAnalysisComplete: () {
+                        setState(() {
+                          // AUTO-FILL DATA (The "Magic" Trick)
+                          _selectedMethod = 'measurements'; // Switch view to see result
+                          _heightVal = 178;
+                          _weightVal = 72;
+                          _chestVal = 98;
+                          _waistVal = 82;
+                          _shoulderVal = 44;
 
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("AI Analysis Complete: Data Populated"),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                );
+              },
+              child: const Text("Start Scanning", style: TextStyle(color: Colors.white, fontSize: 16)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // --- OPTION B: MANUAL SLIDERS (Or Result of Scan) ---
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // RESTORED TITLE & SUBTITLE
         const Text("Body Measurements", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        const Text("Accurate measurements ensure the best virtual fit.", style: TextStyle(fontSize: 16, color: Colors.grey)),
+        const Text("Review and adjust your measurements below.", style: TextStyle(fontSize: 16, color: Colors.grey)),
         const SizedBox(height: 30),
 
         _buildSlider("Height", _heightVal, 140, 220, "cm", (v) => setState(() => _heightVal = v)),
         const SizedBox(height: 20),
         _buildSlider("Weight", _weightVal, 40, 150, "kg", (v) => setState(() => _weightVal = v)),
         const SizedBox(height: 20),
-        const Divider(),
+        const Divider(color: Colors.grey),
         _buildSlider("Chest", _chestVal, 70, 150, "cm", (v) => setState(() => _chestVal = v)),
         const SizedBox(height: 20),
         _buildSlider("Waist", _waistVal, 50, 130, "cm", (v) => setState(() => _waistVal = v)),
@@ -265,26 +332,30 @@ class _AvatarScreenState extends State<AvatarScreen> {
         const SizedBox(height: 30),
         const Text("Skin Tone", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: _skinTones.map((color) {
-            bool isSelected = _selectedSkinColor == color;
-            return GestureDetector(
-              onTap: () => setState(() => _selectedSkinColor = color),
-              child: Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  border: isSelected
-                      ? Border.all(color: Colors.blueAccent, width: 3)
-                      : Border.all(color: Colors.grey[800]!, width: 1),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: _skinTones.map((color) {
+              bool isSelected = _selectedSkinColor == color;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedSkinColor = color),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 15),
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: isSelected
+                        ? Border.all(color: Colors.blueAccent, width: 3)
+                        : Border.all(color: Colors.grey[800]!, width: 1),
+                  ),
+                  child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
                 ),
-                child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
       ],
     );
@@ -318,7 +389,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
           border: Border.all(color: isSelected ? Colors.purpleAccent : Colors.grey[700]!),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(children: [Icon(icon, color: isSelected ? Colors.purpleAccent : Colors.white), const SizedBox(width: 15), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: TextStyle(fontWeight: FontWeight.bold)), Text(subtitle, style: TextStyle(color: Colors.grey[400]))])]),
+        child: Row(children: [Icon(icon, color: isSelected ? Colors.purpleAccent : Colors.white), const SizedBox(width: 15), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: TextStyle(fontWeight: FontWeight.bold)), Text(subtitle, style: TextStyle(color: Colors.grey[400]))])),]),
       ),
     );
   }
@@ -331,7 +402,28 @@ class _AvatarScreenState extends State<AvatarScreen> {
   }
 
   Widget _buildBottomBar() {
-    bool isNext = (_currentStep == 0 && _selectedGender != null) || _currentStep == 1 || (_currentStep == 2 && _selectedMethod != null) || _currentStep == 3;
+    // Only enable "Next" if we are NOT in the 'photo' pre-scan state
+    // i.e., User must finish scan or choose manual to proceed
+    bool isNext = false;
+    if (_currentStep == 0 && _selectedGender != null) isNext = true;
+    if (_currentStep == 1) isNext = true;
+    if (_currentStep == 2 && _selectedMethod != null) isNext = true;
+
+    // Step 3 Logic:
+    if (_currentStep == 3) {
+      if (_selectedMethod == 'measurements') {
+        isNext = true; // Sliders are visible, so we can finish
+      } else {
+        isNext = false; // Camera button is visible, user must click IT, not Next
+      }
+    }
+
+    // If it's the last step, we change text to "Create Avatar"
+    String buttonText = (_currentStep == 3) ? "Create Avatar" : "Next";
+
+    // If we are in Camera mode, hide the bottom bar completely (optional)
+    // or just disable the button. Let's just disable.
+
     return Container(
       padding: const EdgeInsets.all(20),
       child: SizedBox(
@@ -349,7 +441,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
             if (_currentStep < 3) {
               setState(() => _currentStep++);
             } else {
-              // FINISH
+              // --- FINISH & SAVE ---
               UserData.hasCreatedAvatar = true;
               UserData.gender = _selectedGender!;
               UserData.height = _heightVal;
@@ -365,12 +457,11 @@ class _AvatarScreenState extends State<AvatarScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                _currentStep == 3 ? "Create Avatar" : "Next",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_rounded, size: 24),
+              Text(buttonText, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              if (_currentStep < 3) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward_rounded, size: 24),
+              ]
             ],
           ),
         ),
