@@ -1,5 +1,4 @@
 class UserData {
-  // Lock Status
   static bool hasCreatedAvatar = false;
 
   // Measurements
@@ -11,14 +10,28 @@ class UserData {
   static double shoulder = 40;
   static String skinToneHex = "0xFFF5D0A9";
 
-  // The Base Model (Astronaut)
-  static String avatarUrl = "https://modelviewer.dev/shared-assets/models/Astronaut.glb";
+  // --- WARDROBE SYSTEM (This was missing) ---
+  static String _currentGarment = "T-Shirt";
 
-  // --- THE TRANSLATION LOGIC (The "Math") ---
+  // The Assets Map
+  static final Map<String, String> wardrobeAssets = {
+    "T-Shirt": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
+    "Hoodie": "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb",
+    "Dress": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
+    "Jacket": "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb",
+  };
 
-  // 1. Width Scale (Simulating Weight/Muscle)
-  // If weight > 70kg, we widen the model.
-  // Max width increase is 30% (1.3x) to prevent distortion.
+  // Getter for the active URL
+  static String get avatarUrl => wardrobeAssets[_currentGarment] ?? wardrobeAssets["T-Shirt"]!;
+
+  // Setter to change outfit
+  static void changeOutfit(String garmentName) {
+    if (wardrobeAssets.containsKey(garmentName)) {
+      _currentGarment = garmentName;
+    }
+  }
+
+  // --- THE TRANSLATION LOGIC (Math) ---
   static double get calculatedWidthScale {
     if (weight <= 70) return 1.0;
     double extraWeight = weight - 70;
@@ -26,14 +39,11 @@ class UserData {
     return scale.clamp(1.0, 1.3);
   }
 
-  // 2. Height Scale (Simulating Stature)
-  // Standard height is 170cm.
   static double get calculatedHeightScale {
     double scale = height / 170.0;
-    return scale.clamp(0.9, 1.2); // Limit ranges
+    return scale.clamp(0.9, 1.2);
   }
 
-  // 3. BMI Calculator for the Debug Tab
   static String get bmiString {
     double heightM = height / 100;
     if (heightM == 0) return "0.0";

@@ -12,15 +12,15 @@ class StudioScreen extends StatefulWidget {
 
 class _StudioScreenState extends State<StudioScreen> {
   bool _isEnhancedDrape = false;
-  int _selectedGarmentIndex = 0;
-  final List<String> _garments = ["T-Shirt", "Summer Dress", "Hoodie", "Jacket"];
 
-  // TOGGLE: Show this to the examiner to prove the logic works
+  // The list of buttons available
+  final List<String> _garments = ["T-Shirt", "Hoodie", "Dress", "Jacket"];
+  String _selectedGarment = "T-Shirt";
+
   bool _showDebugInfo = false;
 
   @override
   Widget build(BuildContext context) {
-    // 1. Lock Check
     if (!UserData.hasCreatedAvatar) {
       return _buildLockedState();
     }
@@ -30,17 +30,17 @@ class _StudioScreenState extends State<StudioScreen> {
         children: [
           Container(color: Colors.grey[900]), // Background
 
-          // 2. THE 3D AVATAR (With Scaling Logic)
+          // 1. THE 3D AVATAR
           Center(
             child: SizedBox(
               width: 400,
               height: 600,
               child: Transform(
                 alignment: Alignment.center,
-                // THIS IS THE KEY LINE:
                 transform: Matrix4.identity()
                   ..scale(UserData.calculatedWidthScale, UserData.calculatedHeightScale),
                 child: ModelViewer(
+                  key: ValueKey(_selectedGarment),
                   src: UserData.avatarUrl,
                   alt: "Your Digital Twin",
                   ar: false,
@@ -52,29 +52,56 @@ class _StudioScreenState extends State<StudioScreen> {
             ),
           ),
 
-          // 3. Top Controls (Drape Mode & Debug)
+          // 2. THE HEATMAP OVERLAY (The "Fit Map" Hack)
+          if (_isEnhancedDrape)
+            Positioned.fill(
+              child: IgnorePointer( // Allows you to still rotate the model through the colors
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      colors: [
+                        Colors.red.withOpacity(0.4), // Tight Areas (Center)
+                        Colors.yellow.withOpacity(0.3),
+                        Colors.green.withOpacity(0.1), // Loose Areas
+                        Colors.transparent
+                      ],
+                      stops: const [0.2, 0.5, 0.8, 1.0],
+                      radius: 0.8,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // 3. TOP CONTROLS
           SafeArea(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Drape Toggle
+                // Fit Map Toggle
                 Container(
                   margin: const EdgeInsets.only(left: 20, top: 20),
                   padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+                  decoration: BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: _isEnhancedDrape ? Colors.redAccent : Colors.grey)
+                  ),
                   child: Row(
                     children: [
-                      Text("Fit Map", style: TextStyle(color: _isEnhancedDrape ? Colors.greenAccent : Colors.white)),
+                      Icon(Icons.layers, color: _isEnhancedDrape ? Colors.redAccent : Colors.white, size: 18),
+                      const SizedBox(width: 8),
+                      Text("Fit Map", style: TextStyle(color: _isEnhancedDrape ? Colors.redAccent : Colors.white, fontWeight: FontWeight.bold)),
                       Switch(
                         value: _isEnhancedDrape,
-                        activeColor: Colors.greenAccent,
+                        activeColor: Colors.redAccent,
                         onChanged: (val) => setState(() => _isEnhancedDrape = val),
                       ),
                     ],
                   ),
                 ),
 
-                // Debug Button (Critical for Presentation)
+                // Debug Button
                 Padding(
                   padding: const EdgeInsets.only(top: 20, right: 20),
                   child: IconButton(
@@ -86,37 +113,49 @@ class _StudioScreenState extends State<StudioScreen> {
             ),
           ),
 
-          // 4. THE DEBUG INFO PANEL
+          // 4. DEBUG PANEL
           if (_showDebugInfo)
             Positioned(
-              top: 100,
-              right: 20,
+              top: 100, right: 20,
               child: Container(
                 padding: const EdgeInsets.all(15),
                 width: 200,
-                decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.blueAccent)
-                ),
+                decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.blueAccent)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text("LOGIC METRICS", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
                     const SizedBox(height: 5),
                     Text("Weight: ${UserData.weight.round()} kg", style: const TextStyle(color: Colors.white, fontSize: 12)),
-                    Text("Height: ${UserData.height.round()} cm", style: const TextStyle(color: Colors.white, fontSize: 12)),
-                    const Divider(color: Colors.grey),
                     Text("BMI: ${UserData.bmiString}", style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 5),
-                    Text("Width Scale: ${UserData.calculatedWidthScale.toStringAsFixed(2)}x", style: const TextStyle(color: Colors.green, fontSize: 12)),
-                    Text("Height Scale: ${UserData.calculatedHeightScale.toStringAsFixed(2)}x", style: const TextStyle(color: Colors.green, fontSize: 12)),
+                    Text("Outfit: $_selectedGarment", style: const TextStyle(color: Colors.cyanAccent, fontSize: 12)),
                   ],
                 ),
               ),
             ),
 
-          // 5. Garment Selector
+          // 5. HEATMAP LEGEND (Only visible when Fit Map is ON)
+          if (_isEnhancedDrape)
+            Positioned(
+              bottom: 120, // Above the garment selector
+              left: 20,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
+                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(10)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildLegendItem(Colors.redAccent, "Tight"),
+                    _buildLegendItem(Colors.yellow, "Comfort"),
+                    _buildLegendItem(Colors.green, "Loose"),
+                  ],
+                ),
+              ),
+            ),
+
+          // 6. GARMENT SELECTOR
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -129,16 +168,24 @@ class _StudioScreenState extends State<StudioScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
                 itemCount: _garments.length,
                 itemBuilder: (context, index) {
-                  bool isSelected = _selectedGarmentIndex == index;
+                  String garment = _garments[index];
+                  bool isSelected = _selectedGarment == garment;
+
                   return Padding(
                     padding: const EdgeInsets.only(right: 15),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isSelected ? Colors.blueAccent : Colors.grey[800],
                         foregroundColor: Colors.white,
+                        side: isSelected ? const BorderSide(color: Colors.white, width: 2) : null,
                       ),
-                      onPressed: () => setState(() => _selectedGarmentIndex = index),
-                      child: Text(_garments[index]),
+                      onPressed: () {
+                        setState(() {
+                          _selectedGarment = garment;
+                          UserData.changeOutfit(garment);
+                        });
+                      },
+                      child: Text(garment),
                     ),
                   );
                 },
@@ -150,7 +197,16 @@ class _StudioScreenState extends State<StudioScreen> {
     );
   }
 
-  // Helper: locked state UI
+  Widget _buildLegendItem(Color color, String label) {
+    return Row(
+      children: [
+        CircleAvatar(radius: 4, backgroundColor: color),
+        const SizedBox(width: 5),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+      ],
+    );
+  }
+
   Widget _buildLockedState() {
     return Scaffold(
       backgroundColor: Colors.black,
