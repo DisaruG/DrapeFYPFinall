@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart'; // Required for the iOS Spinner
 import 'dart:async';
+import 'dart:ui'; // Required for the Blur Effect
 
 class CameraMockScreen extends StatefulWidget {
   final Function() onAnalysisComplete;
@@ -18,16 +20,16 @@ class _CameraMockScreenState extends State<CameraMockScreen> {
   void _takePicture() async {
     setState(() {
       _isProcessing = true;
-      _statusText = "Capturing Image...";
+      _statusText = "Processing...";
     });
 
     // Phase 1: Upload/Process delay
     await Future.delayed(const Duration(milliseconds: 800));
-    if (mounted) setState(() => _statusText = "Analyzing Body Keypoints...");
+    if (mounted) setState(() => _statusText = "Identifying Keypoints...");
 
     // Phase 2: AI Calculation delay
     await Future.delayed(const Duration(seconds: 2));
-    if (mounted) setState(() => _statusText = "Extracting Measurements...");
+    if (mounted) setState(() => _statusText = "Calculating Dimensions...");
 
     // Phase 3: Finish
     await Future.delayed(const Duration(seconds: 1));
@@ -98,7 +100,7 @@ class _CameraMockScreenState extends State<CameraMockScreen> {
           Container(
             height: double.infinity,
             width: double.infinity,
-            color: const Color(0xFF111111), // Slightly lighter than pure black
+            color: const Color(0xFF111111),
             child: const Center(
               child: Icon(Icons.person, size: 100, color: Colors.white10),
             ),
@@ -116,30 +118,51 @@ class _CameraMockScreenState extends State<CameraMockScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-                  Text(
-                    _isProcessing ? "HOLD STILL" : "ALIGN BODY IN FRAME",
-                    style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold, letterSpacing: 1.5),
-                  ),
+                  if (!_isProcessing) // Hide text when loading to keep it clean
+                    const Text(
+                      "ALIGN BODY IN FRAME",
+                      style: TextStyle(color: Colors.white54, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                    ),
                 ],
               ),
             ),
           ),
 
-          // 3. Loading Indicator (Only when processing)
+          // 3. IOS 14 STYLE LOADING HUD
           if (_isProcessing)
-            Container(
-              color: Colors.black54,
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircularProgressIndicator(color: Colors.blueAccent),
-                    const SizedBox(height: 20),
-                    Text(
-                      _statusText,
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // The Glass Effect
+                  child: Container(
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[800]!.withOpacity(0.7), // Semi-transparent grey
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ],
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CupertinoActivityIndicator(
+                          radius: 20, // Nice large iOS spinner
+                          color: Colors.white,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          _statusText,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

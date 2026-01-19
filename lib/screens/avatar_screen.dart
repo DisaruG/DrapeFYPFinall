@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../user_data.dart';
 import '../main.dart';
-import 'camera_mock_screen.dart'; // Import the Scanner
+import 'camera_mock_screen.dart'; // Ensure you have this file created
 
 class AvatarScreen extends StatefulWidget {
   const AvatarScreen({super.key});
@@ -60,6 +60,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
                 // Reset to defaults
                 _heightVal = 170;
                 _weightVal = 65;
+                _selectedMethod = null;
               });
             },
           )
@@ -273,9 +274,10 @@ class _AvatarScreenState extends State<AvatarScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
               onPressed: () {
-                // LAUNCH THE MOCK CAMERA
+                // LAUNCH THE CAMERA MOCK SCREEN
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -302,7 +304,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
                   ),
                 );
               },
-              child: const Text("Start Scanning", style: TextStyle(color: Colors.white, fontSize: 16)),
+              child: const Text("Start Scanning", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -402,27 +404,19 @@ class _AvatarScreenState extends State<AvatarScreen> {
   }
 
   Widget _buildBottomBar() {
-    // Only enable "Next" if we are NOT in the 'photo' pre-scan state
-    // i.e., User must finish scan or choose manual to proceed
+    // 1. SMART HIDE: If we are in "Scanner Mode", hide this bar so user clicks "Start Scanning"
+    if (_currentStep == 3 && _selectedMethod == 'photo') {
+      return const SizedBox.shrink();
+    }
+
+    // 2. Normal Logic
     bool isNext = false;
     if (_currentStep == 0 && _selectedGender != null) isNext = true;
     if (_currentStep == 1) isNext = true;
     if (_currentStep == 2 && _selectedMethod != null) isNext = true;
+    if (_currentStep == 3 && _selectedMethod == 'measurements') isNext = true;
 
-    // Step 3 Logic:
-    if (_currentStep == 3) {
-      if (_selectedMethod == 'measurements') {
-        isNext = true; // Sliders are visible, so we can finish
-      } else {
-        isNext = false; // Camera button is visible, user must click IT, not Next
-      }
-    }
-
-    // If it's the last step, we change text to "Create Avatar"
     String buttonText = (_currentStep == 3) ? "Create Avatar" : "Next";
-
-    // If we are in Camera mode, hide the bottom bar completely (optional)
-    // or just disable the button. Let's just disable.
 
     return Container(
       padding: const EdgeInsets.all(20),
