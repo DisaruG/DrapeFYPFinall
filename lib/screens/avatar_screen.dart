@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../user_data.dart';
 import '../main.dart';
-import 'camera_mock_screen.dart'; // Connects to your iOS-style camera
 
 class AvatarScreen extends StatefulWidget {
   const AvatarScreen({super.key});
@@ -11,13 +10,15 @@ class AvatarScreen extends StatefulWidget {
 }
 
 class _AvatarScreenState extends State<AvatarScreen> {
-  // Navigation State
+  // Navigation State (Reduced to 3 Steps now)
+  // Step 0: Gender
+  // Step 1: Age
+  // Step 2: Measurements (Sliders)
   int _currentStep = 0;
 
-  // Local State for the Form
+  // Local State
   String? _selectedGender;
   double _selectedAge = 22;
-  String? _selectedMethod;
 
   // Measurements (Defaults)
   double _heightVal = 170;
@@ -59,7 +60,6 @@ class _AvatarScreenState extends State<AvatarScreen> {
                 // Reset measurements
                 _heightVal = 170;
                 _weightVal = 65;
-                _selectedMethod = null;
               });
             },
           )
@@ -149,7 +149,8 @@ class _AvatarScreenState extends State<AvatarScreen> {
   // MODE A: THE WIZARD (New User)
   // ==========================================
   Widget _buildWizard() {
-    double progress = (_currentStep + 1) / 4;
+    // 3 Steps Total now
+    double progress = (_currentStep + 1) / 3;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Your Avatar'),
@@ -185,11 +186,14 @@ class _AvatarScreenState extends State<AvatarScreen> {
   // --- WIZARD STEPS ---
   Widget _buildCurrentStep() {
     switch (_currentStep) {
-      case 0: return _buildGenderStep();
-      case 1: return _buildAgeStep();
-      case 2: return _buildMethodStep();
-      case 3: return _buildInputStep();
-      default: return const Center(child: Text("Error"));
+      case 0:
+        return _buildGenderStep();
+      case 1:
+        return _buildAgeStep();
+      case 2:
+        return _buildInputStep(); // Directly to inputs
+      default:
+        return const Center(child: Text("Error"));
     }
   }
 
@@ -224,64 +228,14 @@ class _AvatarScreenState extends State<AvatarScreen> {
     );
   }
 
-  Widget _buildMethodStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Choose a method", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        const Text("How would you like to build your body model?", style: TextStyle(fontSize: 16, color: Colors.grey)),
-        const SizedBox(height: 40),
-        _buildMethodOption(id: 'photo', title: "Take a Photo (AI)", subtitle: "Quickest. Requires good lighting.", icon: Icons.camera_alt),
-        const SizedBox(height: 15),
-        _buildMethodOption(id: 'measurements', title: "Enter Measurements", subtitle: "Detailed control.", icon: Icons.straighten),
-      ],
-    );
-  }
-
-  // --- STEP 3: INPUT VIEW ---
+  // --- STEP 2: INPUT VIEW (Simplified) ---
   Widget _buildInputStep() {
-    // A: INSTRUCTIONS MODE (Button is now in Bottom Bar)
-    if (_selectedMethod == 'photo') {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(35),
-              decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.blueAccent.withOpacity(0.5), width: 1),
-                  boxShadow: [BoxShadow(color: Colors.blueAccent.withOpacity(0.2), blurRadius: 20)]
-              ),
-              child: const Icon(Icons.qr_code_scanner, size: 60, color: Colors.blueAccent),
-            ),
-            const SizedBox(height: 40),
-
-            const Text("AI Body Scanner", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                "Stand 2 meters away. Our neural network will analyze your keypoints for a precise fit.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, height: 1.5, fontSize: 16),
-              ),
-            ),
-            // NO BUTTON HERE - MOVED TO BOTTOM BAR
-          ],
-        ),
-      );
-    }
-
-    // B: SLIDER MODE
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text("Body Measurements", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        const Text("Review and adjust your measurements below.", style: TextStyle(fontSize: 16, color: Colors.grey)),
+        const Text("Fine-tune your measurements below.", style: TextStyle(fontSize: 16, color: Colors.grey)),
         const SizedBox(height: 30),
 
         _buildSlider("Height", _heightVal, 140, 220, "cm", (v) => setState(() => _heightVal = v)),
@@ -301,7 +255,6 @@ class _AvatarScreenState extends State<AvatarScreen> {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: _skinTones.map((color) {
               bool isSelected = _selectedSkinColor == color;
               return GestureDetector(
@@ -344,22 +297,6 @@ class _AvatarScreenState extends State<AvatarScreen> {
     );
   }
 
-  Widget _buildMethodOption({required String id, required String title, required String subtitle, required IconData icon}) {
-    bool isSelected = _selectedMethod == id;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedMethod = id),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.purpleAccent.withOpacity(0.1) : Colors.transparent,
-          border: Border.all(color: isSelected ? Colors.purpleAccent : Colors.grey[700]!),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(children: [Icon(icon, color: isSelected ? Colors.purpleAccent : Colors.white), const SizedBox(width: 15), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: TextStyle(fontWeight: FontWeight.bold)), Text(subtitle, style: TextStyle(color: Colors.grey[400]))])),]),
-      ),
-    );
-  }
-
   Widget _buildSlider(String label, double val, double min, double max, String unit, Function(double) onChange) {
     return Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label), Text("${val.round()} $unit", style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold))]),
@@ -376,63 +313,30 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
     // --- LOGIC FOR BUTTON STATE ---
 
-    // Step 0-2 (Standard Wizard)
+    // Step 0: Gender
     if (_currentStep == 0 && _selectedGender != null) isNext = true;
+
+    // Step 1: Age
     if (_currentStep == 1) isNext = true;
-    if (_currentStep == 2 && _selectedMethod != null) isNext = true;
 
-    // Step 3 (Input) - THE SPECIAL CASE
-    if (_currentStep == 3) {
-      if (_selectedMethod == 'photo') {
-        // CASE: LAUNCH SCANNER
-        isNext = true;
-        buttonText = "Launch Scanner";
-        buttonIcon = Icons.camera_alt_outlined;
-        onPressedAction = () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CameraMockScreen(
-                onAnalysisComplete: () {
-                  setState(() {
-                    _selectedMethod = 'measurements';
-                    _heightVal = 178;
-                    _weightVal = 72;
-                    _chestVal = 98;
-                    _waistVal = 82;
-                    _shoulderVal = 44;
+    // Step 2: Measurements (Final Step)
+    if (_currentStep == 2) {
+      isNext = true;
+      buttonText = "Create Avatar";
+      buttonIcon = Icons.check;
+      onPressedAction = () {
+        // Finish Logic
+        UserData.hasCreatedAvatar = true;
+        UserData.gender = _selectedGender!;
+        UserData.height = _heightVal;
+        UserData.weight = _weightVal;
+        UserData.chest = _chestVal;
+        UserData.waist = _waistVal;
+        UserData.shoulder = _shoulderVal;
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Measurements Acquired Successfully"),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  });
-                },
-              ),
-            ),
-          );
-        };
-      } else {
-        // CASE: CREATE AVATAR (Manual)
-        isNext = true;
-        buttonText = "Create Avatar";
-        buttonIcon = Icons.check;
-        onPressedAction = () {
-          // Finish Logic
-          UserData.hasCreatedAvatar = true;
-          UserData.gender = _selectedGender!;
-          UserData.height = _heightVal;
-          UserData.weight = _weightVal;
-          UserData.chest = _chestVal;
-          UserData.waist = _waistVal;
-          UserData.shoulder = _shoulderVal;
-
-          final state = context.findAncestorStateOfType<MainWrapperState>();
-          state?.switchToTab(1); // Go to Studio
-        };
-      }
+        final state = context.findAncestorStateOfType<MainWrapperState>();
+        state?.switchToTab(1); // Go to Studio
+      };
     } else {
       // Standard Next Action
       onPressedAction = () {

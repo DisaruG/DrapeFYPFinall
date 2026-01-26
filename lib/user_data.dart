@@ -13,8 +13,8 @@ class UserData {
   // --- WARDROBE SYSTEM ---
 
   // GUARANTEED PUBLIC URLS (Do not change these)
-  static const String _maleBase = "https://models.readyplayer.me/64b73b54435559443c512316.glb";
-  static const String _femaleBase = "https://models.readyplayer.me/64b73c3d435559443c512335.glb";
+  static const String _maleBase = "https://models.readyplayer.me/69779b57b76487db9beb1850.glb";
+  static const String _femaleBase = "https://models.readyplayer.me/697790ef7a65bcfef3a7abae.glb";
 
   // Wardrobe Map
   static final Map<String, String> maleWardrobe = {
