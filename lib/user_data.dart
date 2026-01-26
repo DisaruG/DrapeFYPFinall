@@ -10,38 +10,47 @@ class UserData {
   static double shoulder = 40;
   static String skinToneHex = "0xFFF5D0A9";
 
-  // --- WARDROBE SYSTEM (This was missing) ---
-  static String _currentGarment = "T-Shirt";
+  // --- WARDROBE SYSTEM ---
 
-  // The Assets Map
-  static final Map<String, String> wardrobeAssets = {
-    "T-Shirt": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
-    "Hoodie": "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb",
-    "Dress": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
-    "Jacket": "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb",
+  // GUARANTEED PUBLIC URLS (Do not change these)
+  static const String _maleBase = "https://models.readyplayer.me/64b73b54435559443c512316.glb";
+  static const String _femaleBase = "https://models.readyplayer.me/64b73c3d435559443c512335.glb";
+
+  // Wardrobe Map
+  static final Map<String, String> maleWardrobe = {
+    "T-Shirt": _maleBase,
+    "Hoodie": _maleBase,
+    "Jacket": _maleBase,
+    "Dress": _maleBase,
   };
 
-  // Getter for the active URL
-  static String get avatarUrl => wardrobeAssets[_currentGarment] ?? wardrobeAssets["T-Shirt"]!;
+  static final Map<String, String> femaleWardrobe = {
+    "T-Shirt": _femaleBase,
+    "Hoodie": _femaleBase,
+    "Dress": _femaleBase,
+    "Jacket": _femaleBase,
+  };
 
-  // Setter to change outfit
-  static void changeOutfit(String garmentName) {
-    if (wardrobeAssets.containsKey(garmentName)) {
-      _currentGarment = garmentName;
-    }
+  // Getter
+  static String get avatarUrl {
+    return (gender == "Female") ? _femaleBase : _maleBase;
   }
 
-  // --- THE TRANSLATION LOGIC (Math) ---
+  // Setter
+  static void changeOutfit(String garmentName) {
+  }
+
+  // --- MORPHING ALGORITHM ---
   static double get calculatedWidthScale {
-    if (weight <= 70) return 1.0;
+    if (weight <= 50) return 0.95;
     double extraWeight = weight - 70;
-    double scale = 1.0 + (extraWeight * 0.005);
-    return scale.clamp(1.0, 1.3);
+    double scale = 1.0 + (extraWeight * 0.004);
+    return scale.clamp(0.9, 1.25);
   }
 
   static double get calculatedHeightScale {
     double scale = height / 170.0;
-    return scale.clamp(0.9, 1.2);
+    return scale.clamp(0.92, 1.15);
   }
 
   static String get bmiString {

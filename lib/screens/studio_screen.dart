@@ -30,7 +30,7 @@ class _StudioScreenState extends State<StudioScreen> {
         children: [
           Container(color: Colors.grey[900]), // Background
 
-          // 1. THE 3D AVATAR
+          // 1. THE 3D AVATAR (Ready Player Me)
           Center(
             child: SizedBox(
               width: 400,
@@ -40,29 +40,32 @@ class _StudioScreenState extends State<StudioScreen> {
                 transform: Matrix4.identity()
                   ..scale(UserData.calculatedWidthScale, UserData.calculatedHeightScale),
                 child: ModelViewer(
-                  key: ValueKey(_selectedGarment),
+                  key: ValueKey(_selectedGarment + UserData.gender), // Reloads if Gender or Outfit changes
                   src: UserData.avatarUrl,
                   alt: "Your Digital Twin",
                   ar: false,
                   autoRotate: false,
                   cameraControls: true,
                   backgroundColor: Colors.transparent,
+                  // NEW: Makes the avatar breathe/move if it has animations
+                  autoPlay: true,
+                  animationName: "Idle",
                 ),
               ),
             ),
           ),
 
-          // 2. THE HEATMAP OVERLAY (The "Fit Map" Hack)
+          // 2. THE HEATMAP OVERLAY
           if (_isEnhancedDrape)
             Positioned.fill(
-              child: IgnorePointer( // Allows you to still rotate the model through the colors
+              child: IgnorePointer(
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
                       colors: [
-                        Colors.red.withOpacity(0.4), // Tight Areas (Center)
+                        Colors.red.withOpacity(0.4),
                         Colors.yellow.withOpacity(0.3),
-                        Colors.green.withOpacity(0.1), // Loose Areas
+                        Colors.green.withOpacity(0.1),
                         Colors.transparent
                       ],
                       stops: const [0.2, 0.5, 0.8, 1.0],
@@ -126,6 +129,7 @@ class _StudioScreenState extends State<StudioScreen> {
                   children: [
                     const Text("LOGIC METRICS", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
                     const SizedBox(height: 5),
+                    Text("Gender: ${UserData.gender}", style: const TextStyle(color: Colors.white, fontSize: 12)),
                     Text("Weight: ${UserData.weight.round()} kg", style: const TextStyle(color: Colors.white, fontSize: 12)),
                     Text("BMI: ${UserData.bmiString}", style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 5),
@@ -135,10 +139,10 @@ class _StudioScreenState extends State<StudioScreen> {
               ),
             ),
 
-          // 5. HEATMAP LEGEND (Only visible when Fit Map is ON)
+          // 5. LEGEND
           if (_isEnhancedDrape)
             Positioned(
-              bottom: 120, // Above the garment selector
+              bottom: 120,
               left: 20,
               right: 20,
               child: Container(
